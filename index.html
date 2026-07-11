@@ -238,6 +238,7 @@
   }
   .btn-blue  { background: var(--accent); color: #fff; }
   .btn-green { background: var(--accent2); color: #fff; }
+  .btn-ghost { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
   .btn:hover { opacity: 0.88; transform: translateY(-1px); }
   .btn:active { transform: translateY(0); }
 
@@ -252,38 +253,6 @@
     color: var(--muted);
   }
   .chip strong { color: var(--text); font-weight: 600; }
-
-  /* ── Inline output action buttons ── */
-  .out-label { justify-content: space-between; }
-  .out-label-left { display: flex; align-items: center; gap: 5px; }
-  .out-actions { display: flex; gap: 5px; margin-left: auto; }
-  .btn-sm {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 9px;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: var(--sans);
-    font-size: 0.68rem;
-    font-weight: 600;
-    background: var(--surface);
-    color: var(--muted);
-    transition: all 0.15s;
-  }
-  .btn-sm:hover { background: var(--panel); color: var(--text); border-color: var(--accent); }
-  .btn-sm.copied { background: var(--accent2); color: #fff; border-color: transparent; }
-
-  /* ── Toast ── */
-  #toast {
-    position: fixed; bottom: 20px; right: 20px;
-    background: var(--text); color: var(--surface);
-    padding: 8px 16px; border-radius: 8px;
-    font-size: 0.76rem; font-weight: 600;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s;
-    z-index: 9999;
-  }
-  #toast.show { opacity: 1; }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -330,32 +299,32 @@
     <div class="card-body">
       <div class="grid2" style="gap:12px">
         <div class="field">
-          <label>Campaign Name</label>
-          <input id="tg-campaign" type="text" placeholder="e.g. CMH9_OLD_seeds_warmup" oninput="parseTelegram()">
+          <label>News ID <small style="font-weight:400;text-transform:none">(overrides parsed ID)</small></label>
+          <input id="tg-newsid" type="text" placeholder="e.g. 114811665" oninput="parseTelegram()">
+        </div>
+        <div class="field">
+          <label>Campaign Name <small style="font-weight:400;text-transform:none">(📤 List name)</small></label>
+          <input id="tg-campaign" type="text" placeholder="auto-filled from feedback" oninput="parseTelegram()">
         </div>
         <div class="field">
           <label>Pack Name</label>
-          <input id="tg-pack" type="text" value="IP_FROM" oninput="parseTelegram()">
+          <input id="tg-pack" type="text" placeholder="auto-filled from feedback" oninput="parseTelegram()">
         </div>
         <div class="field">
           <label>IP Limit (per IP)</label>
           <input id="tg-limit" type="number" value="24000" oninput="parseTelegram()">
         </div>
         <div class="field">
-          <label>First Entry Time <small style="font-weight:400">(leave blank = auto)</small></label>
-          <input id="tg-firsttime" type="text" placeholder="HH:MM  (auto from start + offset)" oninput="parseTelegram()">
+          <label>Start Time <small style="font-weight:400;text-transform:none">(auto-filled from feedback)</small></label>
+          <input id="tg-starttime" type="text" placeholder="HH:MM" oninput="parseTelegram()">
         </div>
         <div class="field">
-          <label>Start Offset (minutes)</label>
-          <input id="tg-startoffset" type="number" value="220" oninput="parseTelegram()">
+          <label>End Time <small style="font-weight:400;text-transform:none">(last drop, default 00:00)</small></label>
+          <input id="tg-endtime" type="text" value="00:00" oninput="parseTelegram()">
         </div>
         <div class="field">
           <label>Interval (hours)</label>
           <input id="tg-interval" type="number" value="2" oninput="parseTelegram()">
-        </div>
-        <div class="field">
-          <label>Number of Entries</label>
-          <input id="tg-entries" type="number" value="5" oninput="parseTelegram()">
         </div>
       </div>
     </div>
@@ -368,25 +337,19 @@
     <div class="card-body">
       <div class="out-pair">
         <div>
-          <div class="out-label">
-            <span class="out-label-left"><span class="dot"></span> IPs File (1.txt)</span>
-            <span class="out-actions">
-              <button class="btn-sm" onclick="copyBox('tg-ips-box', this)">⎘ Copy</button>
-              <button class="btn-sm" onclick="dl('tg-ips')">⬇ Download</button>
-            </span>
-          </div>
+          <div class="out-label"><span class="dot"></span> IPs File (1.txt)</div>
           <div class="out-box" id="tg-ips-box"></div>
         </div>
         <div>
-          <div class="out-label">
-            <span class="out-label-left"><span class="dot" style="background:var(--accent)"></span> Offset File (TIME_Offset_Limit.txt)</span>
-            <span class="out-actions">
-              <button class="btn-sm" onclick="copyBox('tg-offset-box', this)">⎘ Copy</button>
-              <button class="btn-sm" onclick="dl('tg-offset')">⬇ Download</button>
-            </span>
-          </div>
+          <div class="out-label"><span class="dot" style="background:var(--accent)"></span> Offset File (TIME_Offset_Limit.txt)</div>
           <div class="out-box" id="tg-offset-box"></div>
         </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-green" onclick="dl('tg-ips')">⬇ Download IPs File</button>
+        <button class="btn btn-ghost" id="copy-tg-ips"    onclick="copyStored('tg-ips','copy-tg-ips')">📋 Copy IPs File</button>
+        <button class="btn btn-blue"  onclick="dl('tg-offset')">⬇ Download Offset File</button>
+        <button class="btn btn-ghost" id="copy-tg-offset" onclick="copyStored('tg-offset','copy-tg-offset')">📋 Copy Offset File</button>
       </div>
     </div>
   </div>
@@ -409,18 +372,30 @@
   <div class="card">
     <div class="card-head">⚙ Settings</div>
     <div class="card-body">
-      <div class="grid3">
+      <div class="grid2" style="gap:12px">
         <div class="field">
-          <label>First Entry Time <small style="font-weight:400">(blank = line time)</small></label>
-          <input id="fl-firsttime" type="text" placeholder="HH:MM" oninput="parseFileLine()">
+          <label>ID <small style="font-weight:400;text-transform:none">(auto-filled from line)</small></label>
+          <input id="fl-id" type="text" placeholder="auto-filled from line" oninput="parseFileLine()">
+        </div>
+        <div class="field">
+          <label>Name <small style="font-weight:400;text-transform:none">(auto-filled from line)</small></label>
+          <input id="fl-name" type="text" placeholder="auto-filled from line" oninput="parseFileLine()">
+        </div>
+        <div class="field">
+          <label>Pack <small style="font-weight:400;text-transform:none">(auto-filled from line)</small></label>
+          <input id="fl-pack" type="text" placeholder="auto-filled from line" oninput="parseFileLine()">
         </div>
         <div class="field">
           <label>Interval (hours)</label>
           <input id="fl-interval" type="number" value="2" oninput="parseFileLine()">
         </div>
         <div class="field">
-          <label>Number of Entries</label>
-          <input id="fl-entries" type="number" value="5" oninput="parseFileLine()">
+          <label>Start Time <small style="font-weight:400;text-transform:none">(auto-filled from line)</small></label>
+          <input id="fl-starttime" type="text" placeholder="HH:MM" oninput="parseFileLine()">
+        </div>
+        <div class="field">
+          <label>End Time <small style="font-weight:400;text-transform:none">(last drop, default 00:00)</small></label>
+          <input id="fl-endtime" type="text" value="00:00" oninput="parseFileLine()">
         </div>
       </div>
     </div>
@@ -431,14 +406,12 @@
   <div class="card" id="fl-out-card" style="display:none">
     <div class="card-head">📦 Generated File Preview</div>
     <div class="card-body">
-      <div class="out-label">
-        <span class="out-label-left"><span class="dot" style="background:var(--accent)"></span> Offset File (TIME_Offset_Limit.txt)</span>
-        <span class="out-actions">
-          <button class="btn-sm" onclick="copyBox('fl-offset-box', this)">⎘ Copy</button>
-          <button class="btn-sm" onclick="dl('fl-offset')">⬇ Download</button>
-        </span>
-      </div>
+      <div class="out-label"><span class="dot" style="background:var(--accent)"></span> Offset File (TIME_Offset_Limit.txt)</div>
       <div class="out-box" id="fl-offset-box"></div>
+      <div class="btn-row">
+        <button class="btn btn-blue"  onclick="dl('fl-offset')">⬇ Download Offset File</button>
+        <button class="btn btn-ghost" id="copy-fl-offset" onclick="copyStored('fl-offset','copy-fl-offset')">📋 Copy Offset File</button>
+      </div>
     </div>
   </div>
 
@@ -499,6 +472,26 @@ function switchTab(tab) {
 /* ══════════════════════════════════════════ */
 /* TELEGRAM PARSER                           */
 /* ══════════════════════════════════════════ */
+
+// Track which fields the user has manually edited so we don't overwrite them
+const _tgManual = {};
+const _autoFillIds = ['tg-newsid','tg-campaign','tg-pack','tg-starttime','fl-id','fl-name','fl-pack','fl-starttime'];
+_autoFillIds.forEach(id => {
+  // Mark as manually edited only on direct user keyboard input
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = $(id);
+    if (el) el.addEventListener('input', () => { _tgManual[id] = el.value.trim() !== ''; });
+  });
+});
+
+function autoFill(id, value) {
+  // Only fill if user hasn't manually typed something in that field
+  if (!_tgManual[id]) {
+    const el = $(id);
+    if (el && el.value.trim() === '') el.value = value;
+  }
+}
+
 function parseTelegram() {
   const text = $('tg-input').value;
   $('tg-chips').innerHTML = '';
@@ -507,66 +500,92 @@ function parseTelegram() {
 
   if (!text.trim()) return;
 
-  // Extract fields
-  const timeMatch  = text.match(/Warming Start at:\s*(\d{1,2}:\d{2})/i);
-  const idMatch    = text.match(/ID-newsletter:\s*(\d+)/i);
-  const ipLines    = [...text.matchAll(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*\|\s*(\d+)\s*\|\s*(\d+)/g)];
+  // ── Extract fields from feedback ────────────────────────────────────────────
+  const timeMatch     = text.match(/Warming Start at:\s*(\d{1,2}:\d{2})/i);
+  const idMatch       = text.match(/ID-newsletter:\s*(\d+)/i);
+  const listMatch     = text.match(/List\s+name:\s*(\S+)/i);
+  const packMatch     = text.match(/Pack[_\s]*num:\s*(\S+)/i);
+  const ipLines       = [...text.matchAll(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s*\|\s*(\d+)\s*\|\s*(\d+)/g)];
 
-  // Validation
-  if (!idMatch) {
-    showAlert('tg-alert', '❌ Could not find "ID-newsletter" in the message.');
+  // ── Auto-fill fields (only if user hasn't overridden them) ──────────────────
+  if (idMatch)   autoFill('tg-newsid',   idMatch[1]);
+  if (listMatch) autoFill('tg-campaign', listMatch[1]);
+  if (packMatch) autoFill('tg-pack',     packMatch[1]);
+  if (timeMatch) autoFill('tg-starttime', timeMatch[1]);
+
+  // ── Read final values (manual override wins over auto-fill) ─────────────────
+  const parsedId   = idMatch   ? idMatch[1]   : null;
+  const parsedTime = timeMatch ? timeMatch[1] : null;
+
+  const newsIdField = $('tg-newsid').value.trim();
+  const id          = newsIdField || parsedId;  // manual News ID takes priority
+  const campaign    = $('tg-campaign').value.trim() || (listMatch ? listMatch[1] : 'CAMPAIGN_NAME');
+  const pack        = $('tg-pack').value.trim()     || (packMatch ? packMatch[1] : 'IP_FROM');
+  const limit       = parseInt($('tg-limit').value)    || 24000;
+  const interval    = parseFloat($('tg-interval').value) || 2;
+
+  // Start time: manual field wins, then parsed from feedback
+  const startFieldVal = $('tg-starttime').value.trim();
+  const startTime     = /^\d{1,2}:\d{2}$/.test(startFieldVal) ? startFieldVal
+                      : parsedTime || null;
+
+  // End time: default 00:00
+  const endFieldVal = $('tg-endtime').value.trim();
+  const endTime     = /^\d{1,2}:\d{2}$/.test(endFieldVal) ? endFieldVal : '00:00';
+
+  // ── Validation ───────────────────────────────────────────────────────────────
+  if (!id) {
+    showAlert('tg-alert', '❌ Could not find "ID-newsletter". Enter it manually in News ID.');
     return;
   }
   if (ipLines.length === 0) {
     showAlert('tg-alert', '❌ Could not find any IP addresses in the message.');
     return;
   }
-
-  const id       = idMatch[1];
-  const startTm  = timeMatch ? timeMatch[1] : null;
-  const limit    = parseInt($('tg-limit').value)       || 24000;
-  const campaign = $('tg-campaign').value.trim()       || 'CAMPAIGN_NAME';
-  const pack     = $('tg-pack').value.trim()           || 'IP_FROM';
-  const interval = parseFloat($('tg-interval').value)  || 2;
-  const entries  = parseInt($('tg-entries').value)     || 5;
-  const startOff = parseInt($('tg-startoffset').value) || 220;
-
-  // First entry time
-  const ftInput = $('tg-firsttime').value.trim();
-  let firstTime;
-  if (/^\d{1,2}:\d{2}$/.test(ftInput)) {
-    firstTime = ftInput;
-  } else if (startTm) {
-    firstTime = addMinutes(startTm, startOff);
-  } else {
-    firstTime = '15:10';
+  if (!startTime) {
+    showAlert('tg-alert', '❌ Could not detect Start Time. Please fill it manually.');
+    return;
   }
 
-  // Build IPs file (tab-separated)
-  const ipsContent = ipLines.map(m => `${m[1]}\t${limit}\t0`).join('\n');
+  // ── Generate schedule from Start Time → End Time (every interval hours) ─────
+  const scheduleLines = [];
+  let current = startTime;
+  const toMins = t => { const [h,m] = t.split(':').map(Number); return h * 60 + m; };
 
-  // Build Offset file
-  const offsetContent = Array.from({length: entries}, (_, i) =>
-    `${addMinutes(firstTime, i * interval * 60)};${id};${campaign};${pack}`
-  ).join('\n');
+  let startMins = toMins(startTime);
+  let endMins   = toMins(endTime);
+  // If end time is next day (e.g. start 13:10, end 00:00 → end is +24h conceptually)
+  if (endMins <= startMins) endMins += 24 * 60;
 
-  stored['tg-ips']    = { content: ipsContent,    filename: '1.txt' };
-  stored['tg-offset'] = { content: offsetContent,  filename: 'TIME_Offset_Limit.txt' };
+  let cur = startMins;
+  while (cur <= endMins) {
+    const hh = String(Math.floor(cur / 60) % 24).padStart(2, '0');
+    const mm = String(cur % 60).padStart(2, '0');
+    scheduleLines.push(`${hh}:${mm};${id};${campaign};${pack}`);
+    cur += interval * 60;
+  }
+
+  // ── Build IPs file (tab-separated) ──────────────────────────────────────────
+  const ipsContent    = ipLines.map(m => `${m[1]}\t${limit}\t0`).join('\n');
+  const offsetContent = scheduleLines.join('\n');
+
+  stored['tg-ips']    = { content: ipsContent,   filename: '1.txt' };
+  stored['tg-offset'] = { content: offsetContent, filename: 'TIME_Offset_Limit.txt' };
 
   $('tg-ips-box').textContent    = ipsContent;
   $('tg-offset-box').textContent = offsetContent;
   $('tg-out-card').style.display = 'block';
 
-  // Info chips
-  const chips = [
+  makeChips($('tg-chips'), [
     ['ID', id],
     ['IPs found', ipLines.length],
-    ['Start', startTm || '—'],
-    ['First entry', firstTime],
-    ['Entries', entries],
+    ['Campaign', campaign],
+    ['Pack', pack],
+    ['Start', startTime],
+    ['End', endTime],
+    ['Drops', scheduleLines.length],
     ['Interval', `${interval}h`],
-  ];
-  makeChips($('tg-chips'), chips);
+  ]);
 }
 
 /* ══════════════════════════════════════════ */
@@ -589,21 +608,50 @@ function parseFileLine() {
     return;
   }
 
-  const [rawTime, id, name, pack] = parts.map(s => s.trim());
+  const [rawTime, parsedId, parsedName, parsedPack] = parts.map(s => s.trim());
 
   if (!/^\d{1,2}:\d{2}$/.test(rawTime)) {
     showAlert('fl-alert', `❌ First field "${rawTime}" is not a valid time (HH:MM).`);
     return;
   }
 
-  const interval = parseFloat($('fl-interval').value) || 2;
-  const entries  = parseInt($('fl-entries').value)    || 5;
-  const ftInput  = $('fl-firsttime').value.trim();
-  const firstTime = /^\d{1,2}:\d{2}$/.test(ftInput) ? ftInput : rawTime;
+  // ── Auto-fill fields (only if user hasn't overridden them) ──────────────────
+  autoFill('fl-id',        parsedId);
+  autoFill('fl-name',      parsedName);
+  autoFill('fl-pack',      parsedPack);
+  autoFill('fl-starttime', rawTime);
 
-  const offsetContent = Array.from({length: entries}, (_, i) =>
-    `${addMinutes(firstTime, i * interval * 60)};${id};${name};${pack}`
-  ).join('\n');
+  // ── Read final values (manual override wins over auto-fill) ─────────────────
+  const id        = $('fl-id').value.trim()   || parsedId;
+  const name      = $('fl-name').value.trim() || parsedName;
+  const pack      = $('fl-pack').value.trim() || parsedPack;
+  const interval  = parseFloat($('fl-interval').value) || 2;
+
+  // Start time: manual field wins, then falls back to the line's own time
+  const startFieldVal = $('fl-starttime').value.trim();
+  const startTime      = /^\d{1,2}:\d{2}$/.test(startFieldVal) ? startFieldVal : rawTime;
+
+  // End time: default 00:00
+  const endFieldVal = $('fl-endtime').value.trim();
+  const endTime      = /^\d{1,2}:\d{2}$/.test(endFieldVal) ? endFieldVal : '00:00';
+
+  // ── Generate schedule from Start Time → End Time (every interval hours) ─────
+  const toMins = t => { const [h,m] = t.split(':').map(Number); return h * 60 + m; };
+
+  let startMins = toMins(startTime);
+  let endMins   = toMins(endTime);
+  if (endMins <= startMins) endMins += 24 * 60;
+
+  const scheduleLines = [];
+  let cur = startMins;
+  while (cur <= endMins) {
+    const hh = String(Math.floor(cur / 60) % 24).padStart(2, '0');
+    const mm = String(cur % 60).padStart(2, '0');
+    scheduleLines.push(`${hh}:${mm};${id};${name};${pack}`);
+    cur += interval * 60;
+  }
+
+  const offsetContent = scheduleLines.join('\n');
 
   stored['fl-offset'] = { content: offsetContent, filename: 'TIME_Offset_Limit.txt' };
 
@@ -611,47 +659,48 @@ function parseFileLine() {
   $('fl-out-card').style.display = 'block';
 
   makeChips($('fl-chips'), [
-    ['Time', rawTime], ['ID', id], ['Name', name], ['Pack', pack],
-    ['Entries', entries], ['Interval', `${interval}h`],
+    ['ID', id], ['Name', name], ['Pack', pack],
+    ['Start', startTime], ['End', endTime],
+    ['Drops', scheduleLines.length], ['Interval', `${interval}h`],
   ]);
 }
 
-/* ── Copy box content ── */
-function copyBox(boxId, btn) {
-  const text = document.getElementById(boxId).textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✓ Copied';
-    btn.classList.add('copied');
-    showToast('Copied to clipboard');
-    setTimeout(() => {
-      btn.textContent = '⎘ Copy';
-      btn.classList.remove('copied');
-    }, 1800);
-  }).catch(() => {
-    // Fallback for environments without clipboard API
+/* ── Copy to clipboard ── */
+function copyStored(key, btnId) {
+  const { content } = stored[key] || {};
+  if (!content) return;
+
+  const done = (ok) => {
+    const btn = $(btnId);
+    if (!btn) return;
+    const original = btn.dataset.label || btn.textContent;
+    btn.dataset.label = original;
+    btn.textContent = ok ? '✅ Copied!' : '❌ Copy failed';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(content).then(() => done(true)).catch(() => fallbackCopy(content, done));
+  } else {
+    fallbackCopy(content, done);
+  }
+}
+
+function fallbackCopy(text, done) {
+  try {
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.position = 'fixed';
     ta.style.opacity = '0';
     document.body.appendChild(ta);
+    ta.focus();
     ta.select();
-    document.execCommand('copy');
+    const ok = document.execCommand('copy');
     document.body.removeChild(ta);
-    btn.textContent = '✓ Copied';
-    btn.classList.add('copied');
-    showToast('Copied to clipboard');
-    setTimeout(() => { btn.textContent = '⎘ Copy'; btn.classList.remove('copied'); }, 1800);
-  });
-}
-
-/* ── Toast ── */
-let _toastTimer;
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+    done(ok);
+  } catch (e) {
+    done(false);
+  }
 }
 
 /* ── Download ── */
@@ -665,6 +714,5 @@ function dl(key) {
   a.click();
 }
 </script>
-<div id="toast"></div>
 </body>
 </html>
