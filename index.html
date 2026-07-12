@@ -197,7 +197,7 @@
     letter-spacing: 0.04em;
   }
   .field label small { font-family: var(--sans); text-transform: none; letter-spacing: 0; }
-  .field input {
+  .field input, .field select {
     width: 100%;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -208,8 +208,9 @@
     padding: 6px 9px;
     transition: border-color 0.15s;
   }
-  .field input:focus { outline: none; border-color: var(--accent); }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
   .field input::placeholder { color: var(--muted); font-family: var(--sans); }
+  .field select { cursor: pointer; }
 
   /* ── Alert ── */
   .alert {
@@ -354,7 +355,12 @@
         </div>
         <div class="field">
           <label>Campaign Name <small>(📤 List name)</small></label>
-          <input id="tg-campaign" type="text" placeholder="auto-filled from feedback" oninput="pinAndParse('tg-campaign','tg')">
+          <select id="tg-campaign" oninput="pinAndParse('tg-campaign','tg')" onchange="pinAndParse('tg-campaign','tg')">
+            <option value="">auto-filled from feedback</option>
+            <option value="CMH9_list_webautomat_9-4*4">CMH9_list_webautomat_9-4*4</option>
+            <option value="CMH9_OLD_seeds_warmup">CMH9_OLD_seeds_warmup</option>
+            <option value="CMH9_NEW_seeds_warmup">CMH9_NEW_seeds_warmup</option>
+          </select>
         </div>
         <div class="field">
           <label>Pack Name</label>
