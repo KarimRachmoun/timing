@@ -361,8 +361,8 @@
           <input id="tg-pack" type="text" placeholder="auto-filled from feedback" oninput="pinAndParse('tg-pack','tg')">
         </div>
         <div class="field">
-          <label>IP Limit (per IP)</label>
-          <input id="tg-limit" type="number" placeholder="nbr send"  oninput="parseTelegram()">
+          <label>IP Limit (per IP) <small>(fallback only — per-IP value from feedback wins)</small></label>
+          <input id="tg-limit" type="number" placeholder="24000" oninput="parseTelegram()">
         </div>
         <div class="field">
           <label>Start Time <small>(auto-filled from feedback)</small></label>
@@ -648,7 +648,7 @@ function parseTelegram() {
   const id          = newsIdField || parsedId;  // manual News ID takes priority
   const campaign    = $('tg-campaign').value.trim() || (listMatch ? listMatch[1] : 'CAMPAIGN_NAME');
   const pack        = $('tg-pack').value.trim()     || (packMatch ? packMatch[1] : 'IP_FROM');
-  const limit       = parseInt($('tg-limit').value)    || 24000;
+  const fallbackLimit = parseInt($('tg-limit').value)  || 24000;
   const interval    = parseFloat($('tg-interval').value) || 2;
 
   // Start time: manual field wins, then parsed from feedback
@@ -692,7 +692,12 @@ function parseTelegram() {
   }
 
   // ── Build IPs file (tab-separated) ──────────────────────────────────────────
-  const ipsContent    = ipLines.map(m => `${m[1]}\t${limit}\t0`).join('\n');
+  // Each IP line in the feedback looks like: IP | limit | sent
+  // Use that per-IP limit (2nd column) rather than a single fixed value.
+  const ipsContent    = ipLines.map(m => {
+    const perIpLimit = parseInt(m[2]) || fallbackLimit;
+    return `${m[1]}\t${perIpLimit}\t0`;
+  }).join('\n');
   const offsetContent = scheduleLines.join('\n');
 
   stored['tg-ips']    = { content: ipsContent,   filename: '1.txt' };
