@@ -336,7 +336,7 @@
       Paste Telegram Feedback
     </div>
     <div class="card-body">
-      <textarea id="tg-input" placeholder="Paste your PMTA Report &amp; Status message here…" oninput="parseTelegram()"></textarea>
+      <textarea id="tg-input" placeholder="Paste your PMTA Report &amp; Status message here…" oninput="unpinAndParse('tg')"></textarea>
       <div id="tg-chips" class="chips"></div>
     </div>
   </div>
@@ -444,7 +444,7 @@
       Paste File Line
     </div>
     <div class="card-body">
-      <textarea id="fl-input" style="min-height:70px" placeholder="e.g.  13:40;115583377;CMH9_OLD_seeds_warmup;dom_intern_pack1" oninput="parseFileLine()"></textarea>
+      <textarea id="fl-input" style="min-height:70px" placeholder="e.g.  13:40;115583377;CMH9_OLD_seeds_warmup;dom_intern_pack1" oninput="unpinAndParse('fl')"></textarea>
       <div id="fl-chips" class="chips"></div>
     </div>
   </div>
@@ -569,23 +569,51 @@ function switchTab(tab) {
 /* TELEGRAM PARSER                           */
 /* ══════════════════════════════════════════ */
 
-// Track which fields the user has manually edited so we don't overwrite them
-const _tgManual = {};
-const _autoFillIds = ['tg-newsid','tg-campaign','tg-pack','tg-starttime','fl-id','fl-name','fl-pack','fl-starttime'];
-_autoFillIds.forEach(id => {
-  // Mark as manually edited only on direct user keyboard input
-  document.addEventListener('DOMContentLoaded', () => {
+// _pinned[id] = true  →  user typed directly in that field.
+// Pinned fields survive a new paste; un-pinning happens when the user clears the field.
+const _pinned = {};
+
+// TG auto-fill field ids
+const TG_AUTO = ['tg-newsid','tg-campaign','tg-pack','tg-starttime'];
+// FL auto-fill field ids
+const FL_AUTO = ['fl-id','fl-name','fl-pack','fl-starttime'];
+
+// Called whenever the main source textarea (tg-input / fl-input) changes.
+// A fresh paste always represents brand-new data, so any stale manual
+// pins from a *previous* paste must be cleared before parsing —
+// otherwise old typed-in values would linger and mask the new input.
+function unpinAndParse(which) {
+  const autoIds = which === 'tg' ? TG_AUTO : FL_AUTO;
+  autoIds.forEach(id => { _pinned[id] = false; });
+  if (which === 'tg') parseTelegram(); else parseFileLine();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  [...TG_AUTO, ...FL_AUTO].forEach(id => {
     const el = $(id);
-    if (el) el.addEventListener('input', () => { _tgManual[id] = el.value.trim() !== ''; });
+    if (!el) return;
+    el.addEventListener('input', () => {
+      _pinned[id] = el.value.trim() !== '';   // clear field = un-pin
+    });
   });
 });
 
+// Called at the start of each parse to wipe stale auto-filled values.
+// Pinned fields (user typed) are left untouched.
+function resetAutoFields(ids) {
+  ids.forEach(id => {
+    if (!_pinned[id]) {
+      const el = $(id);
+      if (el) el.value = '';
+    }
+  });
+}
+
+// Write parsed value into field — skips pinned fields.
 function autoFill(id, value) {
-  // Only fill if user hasn't manually typed something in that field
-  if (!_tgManual[id]) {
-    const el = $(id);
-    if (el && el.value.trim() === '') el.value = value;
-  }
+  if (_pinned[id]) return;
+  const el = $(id);
+  if (el) el.value = value;
 }
 
 function parseTelegram() {
@@ -595,6 +623,9 @@ function parseTelegram() {
   showAlert('tg-alert', '');
 
   if (!text.trim()) return;
+
+  // Clear stale auto-filled values before parsing new input
+  resetAutoFields(TG_AUTO);
 
   // ── Extract fields from feedback ────────────────────────────────────────────
   const timeMatch     = text.match(/Warming Start at:\s*(\d{1,2}:\d{2})/i);
@@ -693,6 +724,9 @@ function parseFileLine() {
   showAlert('fl-alert', '');
 
   if (!raw) return;
+
+  // Clear stale auto-filled values before parsing new input
+  resetAutoFields(FL_AUTO);
 
   // Take only the first non-empty line
   const line = raw.split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
