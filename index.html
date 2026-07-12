@@ -350,15 +350,15 @@
       <div class="grid2" style="gap:12px">
         <div class="field">
           <label>News ID <small>(overrides parsed ID)</small></label>
-          <input id="tg-newsid" type="text" placeholder="e.g. 114811665" oninput="parseTelegram()">
+          <input id="tg-newsid" type="text" placeholder="e.g. 114811665" oninput="pinAndParse('tg-newsid','tg')">
         </div>
         <div class="field">
           <label>Campaign Name <small>(📤 List name)</small></label>
-          <input id="tg-campaign" type="text" placeholder="auto-filled from feedback" oninput="parseTelegram()">
+          <input id="tg-campaign" type="text" placeholder="auto-filled from feedback" oninput="pinAndParse('tg-campaign','tg')">
         </div>
         <div class="field">
           <label>Pack Name</label>
-          <input id="tg-pack" type="text" placeholder="auto-filled from feedback" oninput="parseTelegram()">
+          <input id="tg-pack" type="text" placeholder="auto-filled from feedback" oninput="pinAndParse('tg-pack','tg')">
         </div>
         <div class="field">
           <label>IP Limit (per IP)</label>
@@ -366,7 +366,7 @@
         </div>
         <div class="field">
           <label>Start Time <small>(auto-filled from feedback)</small></label>
-          <input id="tg-starttime" type="text" placeholder="HH:MM" oninput="parseTelegram()">
+          <input id="tg-starttime" type="text" placeholder="HH:MM" oninput="pinAndParse('tg-starttime','tg')">
         </div>
         <div class="field">
           <label>End Time <small>(last drop, default 00:00)</small></label>
@@ -458,15 +458,15 @@
       <div class="grid2" style="gap:12px">
         <div class="field">
           <label>ID <small>(auto-filled from line)</small></label>
-          <input id="fl-id" type="text" placeholder="auto-filled from line" oninput="parseFileLine()">
+          <input id="fl-id" type="text" placeholder="auto-filled from line" oninput="pinAndParse('fl-id','fl')">
         </div>
         <div class="field">
           <label>Name <small>(auto-filled from line)</small></label>
-          <input id="fl-name" type="text" placeholder="auto-filled from line" oninput="parseFileLine()">
+          <input id="fl-name" type="text" placeholder="auto-filled from line" oninput="pinAndParse('fl-name','fl')">
         </div>
         <div class="field">
           <label>Pack <small>(auto-filled from line)</small></label>
-          <input id="fl-pack" type="text" placeholder="auto-filled from line" oninput="parseFileLine()">
+          <input id="fl-pack" type="text" placeholder="auto-filled from line" oninput="pinAndParse('fl-pack','fl')">
         </div>
         <div class="field">
           <label>Interval (hours)</label>
@@ -474,7 +474,7 @@
         </div>
         <div class="field">
           <label>Start Time <small>(auto-filled from line)</small></label>
-          <input id="fl-starttime" type="text" placeholder="HH:MM" oninput="parseFileLine()">
+          <input id="fl-starttime" type="text" placeholder="HH:MM" oninput="pinAndParse('fl-starttime','fl')">
         </div>
         <div class="field">
           <label>End Time <small>(last drop, default 00:00)</small></label>
@@ -588,15 +588,15 @@ function unpinAndParse(which) {
   if (which === 'tg') parseTelegram(); else parseFileLine();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  [...TG_AUTO, ...FL_AUTO].forEach(id => {
-    const el = $(id);
-    if (!el) return;
-    el.addEventListener('input', () => {
-      _pinned[id] = el.value.trim() !== '';   // clear field = un-pin
-    });
-  });
-});
+// Called directly by an auto-fill field's oninput, BEFORE parsing runs.
+// Marking the pin first (instead of after, via a separate deferred
+// listener) guarantees resetAutoFields() never wipes the character
+// the user just typed.
+function pinAndParse(id, which) {
+  const el = $(id);
+  _pinned[id] = el && el.value.trim() !== '';   // clear field = un-pin
+  if (which === 'tg') parseTelegram(); else parseFileLine();
+}
 
 // Called at the start of each parse to wipe stale auto-filled values.
 // Pinned fields (user typed) are left untouched.
